@@ -7,18 +7,16 @@
 //  <last-date>2015-08-10 12:36</last-date>
 // -----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Mvc;
 
+using OSharp.Core.Caching;
+using OSharp.Core.Data.Extensions;
 using OSharp.Core.Security;
 using OSharp.Demo.Contracts;
 using OSharp.Demo.Dtos.Identity;
-using OSharp.Demo.Models.Identity;
 using OSharp.Utility;
 using OSharp.Utility.Data;
 using OSharp.Web.Mvc.Extensions;
@@ -75,6 +73,28 @@ namespace OSharp.Demo.Web.Areas.Admin.Controllers
             return Json(page.ToGridData(), JsonRequestBehavior.AllowGet);
         }
 
+        [Description("管理-用户-节点数据")]
+        public ActionResult NoteData()
+        {
+            IFunction function = ControllerContext.GetExecuteFunction(ServiceProvider);
+            //var nodes = IdentityContract.Users.Where(m => !m.IsLocked).OrderBy(m => m.NickName)
+            //    .Select(m => new
+            //    {
+            //        m.Id,
+            //        m.UserName,
+            //        m.NickName
+            //    });
+            var nodes = IdentityContract.Users.ToCacheList(m => !m.IsLocked,
+                m => new
+                {
+                    m.Id,
+                    m.UserName,
+                    m.NickName
+                },
+                function);
+            return Json(nodes, JsonRequestBehavior.AllowGet);
+        }
+
         #endregion
 
         #region 功能方法
@@ -83,7 +103,7 @@ namespace OSharp.Demo.Web.Areas.Admin.Controllers
         [AjaxOnly]
         [AllowAnonymous]
         [Description("管理-用户-新增")]
-        public async Task<ActionResult> Add(UserDto[] dtos)
+        public async Task<ActionResult> Add(UserInputDto[] dtos)
         {
             dtos.CheckNotNull("dtos");
             OperationResult result = await IdentityContract.AddUsers(dtos);
@@ -94,7 +114,7 @@ namespace OSharp.Demo.Web.Areas.Admin.Controllers
         [AjaxOnly]
         [Logined]
         [Description("管理-用户-编辑")]
-        public async Task<ActionResult> Edit(UserDto[] dtos)
+        public async Task<ActionResult> Edit(UserInputDto[] dtos)
         {
             dtos.CheckNotNull("dtos");
             OperationResult result = await IdentityContract.EditUsers(dtos);

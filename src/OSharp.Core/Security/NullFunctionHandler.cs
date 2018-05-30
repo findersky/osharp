@@ -1,39 +1,30 @@
 ﻿// -----------------------------------------------------------------------
 //  <copyright file="NullFunctionHandler.cs" company="OSharp开源团队">
-//      Copyright (c) 2014-2015 OSharp. All rights reserved.
+//      Copyright (c) 2014-2016 OSharp. All rights reserved.
 //  </copyright>
 //  <site>http://www.osharp.org</site>
 //  <last-editor>郭明锋</last-editor>
-//  <last-date>2015-09-25 12:45</last-date>
+//  <last-date>2016-03-21 19:42</last-date>
 // -----------------------------------------------------------------------
 
 using System;
 using System.Reflection;
 
-using OSharp.Core.Reflection;
-
 
 namespace OSharp.Core.Security
 {
     /// <summary>
-    /// 空的功能信息处理器
+    /// 空的功能信息处理器，用于不需要收集功能信息的场景
     /// </summary>
     public class NullFunctionHandler : FunctionHandlerBase<Function, Guid>
     {
         /// <summary>
-        /// 获取或设置 控制器类型查找器
+        /// 初始化一个<see cref="NullFunctionHandler"/>类型的新实例
         /// </summary>
-        protected override ITypeFinder TypeFinder
+        public NullFunctionHandler()
         {
-            get { return new NullTypeFinder();}
-        }
-
-        /// <summary>
-        /// 获取或设置 功能查找器
-        /// </summary>
-        protected override IMethodInfoFinder MethodInfoFinder
-        {
-            get { return new NullMethodInfoFinder();}
+            TypeFinder = new NullFunctionTypeFinder();
+            MethodInfoFinder = new NullFunctionMethodInfoFinder();
         }
 
         /// <summary>
@@ -41,7 +32,17 @@ namespace OSharp.Core.Security
         /// </summary>
         protected override PlatformToken PlatformToken
         {
-            get { return PlatformToken.Local;}
+            get { return PlatformToken.Local; }
+        }
+        
+        /// <summary>
+        /// 从控制器类型中获取功能信息集合
+        /// </summary>
+        /// <param name="types">控制器类型</param>
+        /// <returns>功能信息集合</returns>
+        protected override Function[] GetFunctions(Type[] types)
+        {
+            return new Function[0];
         }
 
         /// <summary>
@@ -51,7 +52,7 @@ namespace OSharp.Core.Security
         /// <returns></returns>
         protected override Function GetFunction(Type type)
         {
-            return new Function();
+            return null;
         }
 
         /// <summary>
@@ -61,7 +62,23 @@ namespace OSharp.Core.Security
         /// <returns></returns>
         protected override Function GetFunction(MethodInfo method)
         {
-            return new Function();
+            return null;
+        }
+
+        /// <summary>
+        /// 更新功能信息到数据库中
+        /// </summary>
+        /// <param name="functions">功能信息集合</param>
+        protected override void UpdateToRepository(Function[] functions)
+        { }
+
+        /// <summary>
+        /// 获取最新功能信息
+        /// </summary>
+        /// <returns></returns>
+        protected override Function[] GetLastestFunctions()
+        {
+            return new Function[0];
         }
 
         /// <summary>

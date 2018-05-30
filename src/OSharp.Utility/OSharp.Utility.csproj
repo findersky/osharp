@@ -32,7 +32,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>none</DebugType>
+    <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -40,12 +40,13 @@
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\OSharp.Utility.XML</DocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>OSharp.Keys.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\..\docs\OSharp.Keys.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup>
     <DelaySign>false</DelaySign>
@@ -63,6 +64,7 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
     <Reference Include="System.Runtime.Caching" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -72,6 +74,9 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\VersionAssemblyInfo.cs">
+      <Link>Properties\VersionAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="Collections\ComparisonHelper.cs" />
     <Compile Include="Collections\EqualityHelper.cs" />
     <Compile Include="DataAnnotations\PasswordAttribute.cs" />
@@ -82,11 +87,13 @@
     <Compile Include="Data\DateTimeRange.cs" />
     <Compile Include="Data\IOSharpResult.cs" />
     <Compile Include="Data\JsonHelper.cs" />
+    <Compile Include="Data\MathExpression.cs" />
     <Compile Include="Data\MathHelper.cs" />
     <Compile Include="Data\OperationResult.cs" />
     <Compile Include="Data\OperationResultType.cs" />
     <Compile Include="Data\OSharpResult.cs" />
     <Compile Include="Data\PageCondition.cs" />
+    <Compile Include="Data\RegexPatterns.cs" />
     <Compile Include="Data\SerializeHelper.cs" />
     <Compile Include="Data\Singleton.cs" />
     <Compile Include="Data\SingletonDictionary.cs" />
@@ -99,8 +106,12 @@
     <Compile Include="Drawing\ValidateCoder.cs" />
     <Compile Include="Drawing\ValidateCodeType.cs" />
     <Compile Include="Dynamic\Exposed.cs" />
+    <Compile Include="Extensions\ArrayExtensions.cs" />
     <Compile Include="Extensions\BitmapExtensions.cs" />
     <Compile Include="Extensions\DateTimeExtensions.cs" />
+    <Compile Include="Filter\PageResult.cs" />
+    <Compile Include="Net\NetHelper.cs" />
+    <Compile Include="Reflection\ComLibraryLoader.cs" />
     <Compile Include="Reflection\FastInvokeHandler.cs" />
     <Compile Include="Dynamic\MetaObject.cs" />
     <Compile Include="Exceptions\ExceptionMessage.cs" />
@@ -145,6 +156,10 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Reflection\IComClassFactory.cs" />
+    <Compile Include="Reflection\NativeMethods.cs" />
+    <Compile Include="Reflection\SyncLocker.cs" />
+    <Compile Include="Secutiry\AesHelper.cs" />
     <Compile Include="Secutiry\CommunicationCryptor.cs" />
     <Compile Include="Secutiry\DesHelper.cs" />
     <Compile Include="Secutiry\HashHelper.cs" />
@@ -167,7 +182,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="OSharp.Keys.snk" />
     <None Include="OSharp.Utility.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>

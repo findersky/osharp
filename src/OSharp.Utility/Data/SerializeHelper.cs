@@ -6,10 +6,7 @@
 //  <last-date>2015-01-02 15:54</last-date>
 // -----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml.Serialization;
@@ -45,7 +42,7 @@ namespace OSharp.Utility.Data
         public static T FromBinary<T>(byte[] bytes)
         {
             bytes.CheckNotNullOrEmpty("bytes");
-            using (MemoryStream ms = new MemoryStream())
+            using (MemoryStream ms = new MemoryStream(bytes))
             {
                 BinaryFormatter formatter = new BinaryFormatter();
                 return (T)formatter.Deserialize(ms);

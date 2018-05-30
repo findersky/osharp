@@ -6,22 +6,18 @@
 //  <last-date>2015-01-09 20:43</last-date>
 // -----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing.Printing;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 
+using OSharp.Core.Security;
 using OSharp.Demo.Contracts;
 using OSharp.Demo.Dtos.Identity;
 using OSharp.Utility;
 using OSharp.Utility.Data;
 using OSharp.Utility.Filter;
-using OSharp.Web.Mvc.Binders;
+using OSharp.Web.Mvc;
 using OSharp.Web.Mvc.Extensions;
-using OSharp.Web.Mvc.Logging;
+using OSharp.Web.Mvc.Filters;
 using OSharp.Web.Mvc.Security;
 using OSharp.Web.Mvc.UI;
 
@@ -29,6 +25,7 @@ using OSharp.Web.Mvc.UI;
 namespace OSharp.Demo.Web.Areas.Admin.Controllers
 {
     [Description("管理-角色")]
+    //[OsharpAuthorize]
     public class RolesController : AdminBaseController
     {
         /// <summary>
@@ -43,6 +40,7 @@ namespace OSharp.Demo.Web.Areas.Admin.Controllers
         //id: 组织机构编号
         [AjaxOnly]
         [Description("管理-角色-列表数据")]
+        [RoleLimit]
         public ActionResult GridData(int? id)
         {
             GridRequest request = new GridRequest(Request);
@@ -73,7 +71,7 @@ namespace OSharp.Demo.Web.Areas.Admin.Controllers
         [HttpPost]
         [AjaxOnly]
         [Description("管理-角色-新增")]
-        public ActionResult Add(RoleDto[] dtos)
+        public ActionResult Add(RoleInputDto[] dtos)
         {
             dtos.CheckNotNull("dtos" );
             OperationResult result = IdentityContract.AddRoles(dtos);
@@ -83,7 +81,7 @@ namespace OSharp.Demo.Web.Areas.Admin.Controllers
         [HttpPost]
         [AjaxOnly]
         [Description("管理-角色-编辑")]
-        public ActionResult Edit(RoleDto[] dtos)
+        public ActionResult Edit(RoleInputDto[] dtos)
         {
             dtos.CheckNotNull("dtos" );
             OperationResult result = IdentityContract.EditRoles(dtos);

@@ -6,10 +6,10 @@
 //  <last-date>2015-07-11 1:14</last-date>
 // -----------------------------------------------------------------------
 
+using System;
 using System.ComponentModel.DataAnnotations;
 
 using OSharp.Core.Data;
-using OSharp.Core.Initialize;
 
 
 namespace OSharp.Core.Security
@@ -18,6 +18,7 @@ namespace OSharp.Core.Security
     /// 功能信息基类
     /// </summary>
     public abstract class FunctionBase<TKey> : EntityBase<TKey>, IFunction
+        where TKey : IEquatable<TKey>
     {
         /// <summary>
         /// 获取 功能名称
@@ -107,5 +108,10 @@ namespace OSharp.Core.Security
         /// 获取或设置 是否自定义功能
         /// </summary>
         public bool IsCustom { get; set; }
+
+        /// <summary>
+        /// 获取或设置 是否已逻辑删除
+        /// </summary>
+        public bool IsDeleted { get; set; }
     }
 }

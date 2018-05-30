@@ -9,8 +9,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using OSharp.Core.Properties;
 using OSharp.Utility.Logging;
@@ -72,7 +70,11 @@ namespace OSharp.Core.Caching
             {
                 return default(T);
             }
-            return (T)value;
+            if (value is T)
+            {
+                return (T)value;
+            }
+            return default(T);
         }
 
         /// <summary>

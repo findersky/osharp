@@ -7,12 +7,6 @@
 //  <last-date>2015-10-10 15:49</last-date>
 // -----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using OSharp.Core.Reflection;
 
 
@@ -28,17 +22,11 @@ namespace OSharp.Core.Dependency
         /// </summary>
         public ServiceBuildOptions()
         {
-            AssemblyFinder = new DirectoryAssemblyFinder();
             TransientTypeFinder = new TransientDependencyTypeFinder();
             ScopeTypeFinder = new ScopeDependencyTypeFinder();
             SingletonTypeFinder = new SingletonDependencyTypeFinder();
         }
-
-        /// <summary>
-        /// 获取或设置 程序集查找器
-        /// </summary>
-        public IAssemblyFinder AssemblyFinder { get; set; }
-
+        
         /// <summary>
         /// 获取或设置 即时生命周期依赖类型查找器
         /// </summary>

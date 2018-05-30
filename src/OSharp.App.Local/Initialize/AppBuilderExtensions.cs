@@ -7,12 +7,6 @@
 //  <last-date>2015-09-29 23:08</last-date>
 // -----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using OSharp.Core;
 using OSharp.Core.Dependency;
 using OSharp.Utility;
@@ -30,12 +24,11 @@ namespace OSharp.App.Local.Initialize
         /// <summary>
         /// 初始化本地程序集框架
         /// </summary>
-        public static IAppBuilder UseLocalInitialize(this IAppBuilder app, IServiceCollection services, IIocBuilder iocBuilder)
+        public static IAppBuilder UseLocalInitialize(this IAppBuilder app, IIocBuilder iocBuilder)
         {
-            services.CheckNotNull("services" );
             iocBuilder.CheckNotNull("iocBuilder" );
             IFrameworkInitializer initializer = new FrameworkInitializer();
-            initializer.Initialize(services, iocBuilder);
+            initializer.Initialize(iocBuilder);
             return app;
         }
     }

@@ -8,19 +8,15 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
 
-using OSharp.Core.Reflection;
 using OSharp.Core.Security;
 using OSharp.Utility;
 using OSharp.Utility.Extensions;
 using OSharp.Web.Http.Properties;
-
+using System.Collections.Generic;
 
 namespace OSharp.Web.Http.Initialize
 {
@@ -29,22 +25,6 @@ namespace OSharp.Web.Http.Initialize
     /// </summary>
     public class WebApiFunctionHandler : FunctionHandlerBase<Function, Guid>
     {
-        /// <summary>
-        /// 获取或设置 控制器类型查找器
-        /// </summary>
-        protected override ITypeFinder TypeFinder
-        {
-            get { return new ControllerTypeFinder(); }
-        }
-
-        /// <summary>
-        /// 获取或设置 功能查找器
-        /// </summary>
-        protected override IMethodInfoFinder MethodInfoFinder
-        {
-            get { return new ActionMethodInfoFinder(); }
-        }
-
         /// <summary>
         /// 获取 功能技术提供者，如Mvc/WebApi/SignalR等，用于区分功能来源，各技术更新功能时，只更新属于自己技术的功能
         /// </summary>
@@ -64,13 +44,20 @@ namespace OSharp.Web.Http.Initialize
             {
                 throw new InvalidOperationException(Resources.ActionMethodInfoFinder_TypeNotApiControllerType.FormatWith(type.FullName));
             }
+
+            FunctionType controllerFunctionType = type.HasAttribute<LoginedAttribute>() || type.HasAttribute<AuthorizeAttribute>()
+                ? FunctionType.Logined
+                : (type.HasAttribute<RoleLimitAttribute>()
+                    ? FunctionType.RoleLimit
+                    : FunctionType.Anonymouse);
+
             Function function = new Function()
             {
                 Name = type.ToDescription(),
                 Area = GetArea(type),
-                Controller = type.Name.Replace("ApiController", string.Empty),
+                Controller = type.Name.Replace("ApiController", string.Empty).Replace("Controller", string.Empty),
                 IsController = true,
-                FunctionType = FunctionType.Anonymouse,
+                FunctionType = controllerFunctionType,
                 PlatformToken = PlatformToken
             };
             return function;
@@ -83,36 +70,38 @@ namespace OSharp.Web.Http.Initialize
         /// <returns></returns>
         protected override Function GetFunction(MethodInfo method)
         {
-            if (method.ReturnType != typeof(IHttpActionResult) && method.ReturnType != typeof(Task<IHttpActionResult>))
-            {
-                throw new InvalidOperationException(Resources.FunctionHandler_MethodNotApiAction.FormatWith(method.Name));
-            }
-
-            FunctionType functionType = FunctionType.Anonymouse;
-            if (method.HasAttribute<AllowAnonymousAttribute>(true))
-            {
-                functionType = FunctionType.Anonymouse;
-            }
-            else if (method.HasAttribute<LoginedAttribute>(true))
-            {
-                functionType = FunctionType.Logined;
-            }
-            else if (method.HasAttribute<RoleLimitAttribute>(true))
-            {
-                functionType = FunctionType.RoleLimit;
-            }
+            if (!typeof(IHttpActionResult).IsAssignableFrom(method.ReturnType)
+                && (!method.ReturnType.IsGenericType || method.ReturnType.GetGenericTypeDefinition() != typeof(Task<>)
+                    || !typeof(IHttpActionResult).IsAssignableFrom(method.ReturnType.GetGenericArguments()[0])))
+            { }
+            
             Type type = method.DeclaringType;
             if (type == null)
             {
                 throw new InvalidOperationException(Resources.FunctionHandler_DefindActionTypeIsNull.FormatWith(method.Name));
             }
+
+            FunctionType controllerFunctionType = type.HasAttribute<LoginedAttribute>() || type.HasAttribute<AuthorizeAttribute>()
+                ? FunctionType.Logined
+                : (type.HasAttribute<RoleLimitAttribute>()
+                    ? FunctionType.RoleLimit
+                    : FunctionType.Anonymouse);
+
+            FunctionType actionFunctionType = method.HasAttribute<LoginedAttribute>() || method.HasAttribute<AuthorizeAttribute>()
+                ? FunctionType.Logined
+                : method.HasAttribute<AllowAnonymousAttribute>()
+                    ? FunctionType.Anonymouse
+                    : method.HasAttribute<RoleLimitAttribute>()
+                        ? FunctionType.RoleLimit
+                        : controllerFunctionType;
+
             Function function = new Function()
             {
                 Name = method.ToDescription(),
                 Area = GetArea(type),
-                Controller = type.Name.Replace("ApiController", string.Empty),
+                Controller = type.Name.Replace("ApiController", string.Empty).Replace("Controller", string.Empty),
                 Action = method.Name,
-                FunctionType = functionType,
+                FunctionType = actionFunctionType,
                 PlatformToken = PlatformToken,
                 IsController = false,
                 IsAjax = false,
@@ -141,11 +130,14 @@ namespace OSharp.Web.Http.Initialize
         /// <summary>
         /// 重写以实现是否忽略指定方法的功能信息
         /// </summary>
-        /// <param name="method">方法信息</param>
+        /// <param name="action">要判断的功能信息</param>
+        /// <param name="method">功能相关的方法信息</param>
+        /// <param name="functions">已存在的功能信息集合</param>
         /// <returns></returns>
-        protected override bool IsIgnoreMethod(MethodInfo method)
+        protected override bool IsIgnoreMethod(Function action, MethodInfo method, IEnumerable<Function> functions)
         {
-            return method.HasAttribute<HttpPostAttribute>();
+            bool flag = base.IsIgnoreMethod(action, method, functions);
+            return flag && method.HasAttribute<HttpPostAttribute>();
         }
     }
 }

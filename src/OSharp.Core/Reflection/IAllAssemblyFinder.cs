@@ -7,11 +7,7 @@
 //  <last-date>2015-10-10 12:03</last-date>
 // -----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using OSharp.Core.Dependency;
 
 
 namespace OSharp.Core.Reflection
@@ -19,6 +15,6 @@ namespace OSharp.Core.Reflection
     /// <summary>
     /// 定义所有程序集查找器
     /// </summary>
-    public interface IAllAssemblyFinder : IAssemblyFinder
+    public interface IAllAssemblyFinder : IAssemblyFinder, ISingletonDependency
     { }
 }

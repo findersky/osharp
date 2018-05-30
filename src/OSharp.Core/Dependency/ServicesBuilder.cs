@@ -8,18 +8,8 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using OSharp.Core.Configs;
-using OSharp.Core.Context;
-using OSharp.Core.Data;
-using OSharp.Core.Initialize;
-using OSharp.Core.Properties;
-using OSharp.Core.Reflection;
-using OSharp.Utility.Extensions;
+using System.Reflection;
 
 
 namespace OSharp.Core.Dependency
@@ -53,24 +43,30 @@ namespace OSharp.Core.Dependency
         public IServiceCollection Build()
         {
             IServiceCollection services = new ServiceCollection();
-            OSharpContext.IocRegisterServices = services;
             ServiceBuildOptions options = _options;
+            try
+            {
+                //添加即时生命周期类型的映射
+                Type[] dependencyTypes = options.TransientTypeFinder.FindAll();
+                AddTypeWithInterfaces(services, dependencyTypes, LifetimeStyle.Transient);
 
-            //添加即时生命周期类型的映射
-            Type[] dependencyTypes = options.TransientTypeFinder.FindAll();
-            AddTypeWithInterfaces(services, dependencyTypes, LifetimeStyle.Transient);
+                //添加局部生命周期类型的映射
+                dependencyTypes = options.ScopeTypeFinder.FindAll();
+                AddTypeWithInterfaces(services, dependencyTypes, LifetimeStyle.Scoped);
 
-            //添加局部生命周期类型的映射
-            dependencyTypes = options.ScopeTypeFinder.FindAll();
-            AddTypeWithInterfaces(services, dependencyTypes, LifetimeStyle.Scoped);
+                //添加单例生命周期类型的映射
+                dependencyTypes = options.SingletonTypeFinder.FindAll();
+                AddTypeWithInterfaces(services, dependencyTypes, LifetimeStyle.Singleton);
 
-            //添加单例生命周期类型的映射
-            dependencyTypes = options.SingletonTypeFinder.FindAll();
-            AddTypeWithInterfaces(services, dependencyTypes, LifetimeStyle.Singleton);
+                //全局服务
+                AddGlobalTypes(services);
 
-            //全局服务
-            AddGlobalTypes(services);
-
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                Exception[] loadExs = ex.LoaderExceptions;
+                throw;
+            }
             return services;
         }
         
@@ -112,7 +108,7 @@ namespace OSharp.Core.Dependency
         /// <param name="services">服务映射信息集合</param>
         protected virtual void AddGlobalTypes(IServiceCollection services)
         {
-            services.AddSingleton<IAllAssemblyFinder, DirectoryAssemblyFinder>();
+            //services.AddSingleton<IAllAssemblyFinder, DirectoryAssemblyFinder>();
         }
 
         private static Type[] GetImplementedInterfaces(Type type)

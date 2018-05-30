@@ -27,6 +27,18 @@ namespace OSharp.Utility.Extensions
         #region IEnumerable的扩展
 
         /// <summary>
+        /// 打乱一个集合的项顺序
+        /// </summary>
+        public static IEnumerable<TSource> Shuffle<TSource>(this IEnumerable<TSource> source)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException("source");
+            }
+            return source.OrderBy(m => Guid.NewGuid());
+        }
+
+        /// <summary>
         /// 将集合展开并分别转换成字符串，再以指定的分隔符衔接，拼成一个字符串返回。默认分隔符为逗号
         /// </summary>
         /// <param name="collection"> 要处理的集合 </param>
@@ -51,7 +63,7 @@ namespace OSharp.Utility.Extensions
             itemFormatFunc.CheckNotNull("itemFormatFunc");
             if (!collection.Any())
             {
-                return null;
+                return string.Empty;
             }
             StringBuilder sb = new StringBuilder();
             int i = 0;
@@ -123,11 +135,11 @@ namespace OSharp.Utility.Extensions
         /// <param name="propertyName">排序属性名</param>
         /// <param name="sortDirection">排序方向</param>
         /// <returns>排序后的数据集</returns>
-        public static IOrderedEnumerable<T> OrderBy<T>(this IEnumerable<T>source, 
+        public static IOrderedEnumerable<T> OrderBy<T>(this IEnumerable<T> source,
             string propertyName,
             ListSortDirection sortDirection = ListSortDirection.Ascending)
         {
-            propertyName.CheckNotNullOrEmpty("propertyName" );
+            propertyName.CheckNotNullOrEmpty("propertyName");
             return CollectionPropertySorter<T>.OrderBy(source, propertyName, sortDirection);
         }
 
@@ -138,9 +150,9 @@ namespace OSharp.Utility.Extensions
         /// <param name="source">要排序的数据集</param>
         /// <param name="sortCondition">列表字段排序条件</param>
         /// <returns></returns>
-        public static IOrderedEnumerable<T> OrderBy<T>(this IEnumerable<T>source, SortCondition sortCondition )
+        public static IOrderedEnumerable<T> OrderBy<T>(this IEnumerable<T> source, SortCondition sortCondition)
         {
-            sortCondition.CheckNotNull("sortCondition" );
+            sortCondition.CheckNotNull("sortCondition");
             return source.OrderBy(sortCondition.SortField, sortCondition.ListSortDirection);
         }
 

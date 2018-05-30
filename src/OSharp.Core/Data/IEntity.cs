@@ -7,10 +7,6 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 
 namespace OSharp.Core.Data
@@ -18,11 +14,11 @@ namespace OSharp.Core.Data
     /// <summary>
     /// 数据模型接口
     /// </summary>
-    public interface IEntity<TKey>
+    public interface IEntity<out TKey> where TKey : IEquatable<TKey>
     {
         /// <summary>
-        /// 获取或设置 实体唯一标识，主键
+        /// 获取 实体唯一标识，主键
         /// </summary>
-        TKey Id { get; set; }
+        TKey Id { get; }
     }
 }

@@ -4,7 +4,7 @@
 //  </copyright>
 //  <site>http://www.osharp.org</site>
 //  <last-editor>郭明锋</last-editor>
-//  <last-date>2015-10-10 15:31</last-date>
+//  <last-date>2015-10-12 15:25</last-date>
 // -----------------------------------------------------------------------
 
 using System;
@@ -28,6 +28,14 @@ namespace OSharp.Autofac.Http
     public class WebApiAutofacIocBuilder : IocBuilderBase
     {
         /// <summary>
+        /// 初始化一个<see cref="WebApiAutofacIocBuilder"/>类型的新实例
+        /// </summary>
+        /// <param name="services">服务信息集合</param>
+        public WebApiAutofacIocBuilder(IServiceCollection services)
+            : base(services)
+        { }
+
+        /// <summary>
         /// 添加自定义服务映射
         /// </summary>
         /// <param name="services">服务信息集合</param>
@@ -36,6 +44,8 @@ namespace OSharp.Autofac.Http
             services.AddInstance(this);
             services.AddSingleton<IIocResolver, WebApiIocResolver>();
             services.AddSingleton<IFunctionHandler, WebApiFunctionHandler>();
+            services.AddSingleton<IFunctionTypeFinder, WebApiControllerTypeFinder>();
+            services.AddSingleton<IFunctionMethodInfoFinder, WebApiActionMethodInfoFinder>();
         }
 
         /// <summary>
@@ -52,7 +62,7 @@ namespace OSharp.Autofac.Http
             builder.RegisterWebApiModelBinderProvider();
             builder.Populate(services);
             IContainer container = builder.Build();
-            IDependencyResolver resolver = new AutofacWebApiDependencyResolver(container);
+            AutofacWebApiDependencyResolver resolver = new AutofacWebApiDependencyResolver(container);
             GlobalConfiguration.Configuration.DependencyResolver = resolver;
             return (IServiceProvider)resolver.GetService(typeof(IServiceProvider));
         }

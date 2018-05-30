@@ -1,17 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Web.Http;
+
+using OSharp.Web.Http.Filters;
 
 
 namespace OSharp.Web.Http
 {
     /// <summary>
-    /// WebAPI的控制器基类
+    /// OSharp-WebAPI的控制器基类
     /// </summary>
-    //[CustomAuthorize]
+    [OsharpAuthorize]
+    [OperateLogFilter]
     public abstract class BaseApiController : ApiController
     {
+        /// <summary>
+        /// 获取或设置 依赖注入服务提供者
+        /// </summary>
+        public IServiceProvider ServiceProvider { get; set; }
     }
 }

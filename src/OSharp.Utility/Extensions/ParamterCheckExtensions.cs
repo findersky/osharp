@@ -10,10 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-using OSharp.Utility.Extensions;
 using OSharp.Utility.Properties;
 
 
@@ -173,14 +170,14 @@ namespace OSharp.Utility
         {
             bool flag = startEqual ? value.CompareTo(start) >= 0 : value.CompareTo(start) > 0;
             string message = startEqual
-                ? string.Format(Resources.ParameterCheck_BetweenNotEqual, paramName, start, end, start)
-                : string.Format(Resources.ParameterCheck_Between, paramName, start, end);
+                ? string.Format(Resources.ParameterCheck_Between, paramName, start, end)
+                : string.Format(Resources.ParameterCheck_BetweenNotEqual, paramName, start, end, start);
             Require<ArgumentOutOfRangeException>(flag, message);
 
             flag = endEqual ? value.CompareTo(end) <= 0 : value.CompareTo(end) < 0;
             message = endEqual
-                ? string.Format(Resources.ParameterCheck_BetweenNotEqual, paramName, start, end, end)
-                : string.Format(Resources.ParameterCheck_Between, paramName, start, end);
+                ? string.Format(Resources.ParameterCheck_Between, paramName, start, end)
+                : string.Format(Resources.ParameterCheck_BetweenNotEqual, paramName, start, end, end);
             Require<ArgumentOutOfRangeException>(flag, message);
         }
 

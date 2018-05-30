@@ -7,10 +7,6 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 
 namespace OSharp.Core.Security
@@ -18,7 +14,7 @@ namespace OSharp.Core.Security
     /// <summary>
     /// 指定功能需要登录才能访问
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class LoginedAttribute : Attribute
     { }
 }

@@ -54,7 +54,8 @@ namespace OSharp.Autofac
                         }
                         builder.RegisterGeneric(descriptor.ImplementationType)
                             .As(descriptor.ServiceType)
-                            .PropertiesAutowired()
+                            .AsSelf()
+                            .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies)
                             .ConfigureLifetimeStyle(descriptor.Lifetime);
                     }
                     else
@@ -65,7 +66,8 @@ namespace OSharp.Autofac
                         }
                         builder.RegisterType(descriptor.ImplementationType)
                             .As(descriptor.ServiceType)
-                            .PropertiesAutowired()
+                            .AsSelf()
+                            .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies)
                             .ConfigureLifetimeStyle(descriptor.Lifetime);
                     }
                 }
@@ -85,7 +87,8 @@ namespace OSharp.Autofac
                 {
                     builder.RegisterInstance(descriptor.ImplementationInstance)
                         .As(descriptor.ServiceType)
-                        .PropertiesAutowired()
+                        .AsSelf()
+                        .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies)
                         .ConfigureLifetimeStyle(descriptor.Lifetime);
                 }
             }

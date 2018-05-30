@@ -1,26 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using System.Web.Mvc;
 
-using OSharp.Core;
+using Microsoft.AspNet.Identity;
+
 using OSharp.Core.Caching;
-using OSharp.Core.Context;
 using OSharp.Core.Data;
-using OSharp.Core.Data.Entity;
+using OSharp.Data.Entity;
 using OSharp.Core.Dependency;
-using OSharp.Core.Exceptions;
-using OSharp.Core.Logging;
+using OSharp.Core.Extensions;
 using OSharp.Core.Security;
 using OSharp.Demo.Contracts;
+using OSharp.Demo.Dtos.OAuth;
 using OSharp.Demo.Identity;
 using OSharp.Demo.Models.Identity;
+using OSharp.Demo.OAuth;
+using OSharp.Utility.Data;
 using OSharp.Utility.Extensions;
 using OSharp.Web.Mvc;
 using OSharp.Web.Mvc.Extensions;
-using OSharp.Web.Mvc.Logging;
+using OSharp.Web.Mvc.Filters;
 
 
 namespace OSharp.Demo.Web.Controllers
@@ -42,7 +44,7 @@ namespace OSharp.Demo.Web.Controllers
         {
             return View();
         }
-
+        
         [Description("测试-缓存测试")]
         public ActionResult TestCacher()
         {
@@ -75,9 +77,46 @@ namespace OSharp.Demo.Web.Controllers
                 format.FormatWith("DefaultDbContext", ServiceProvider.GetService<DefaultDbContext>().GetHashCode()),
                 format.FormatWith("DefaultDbContext", ServiceProvider.GetService<DefaultDbContext>().GetHashCode()),
                 format.FormatWith("IRepository<User,int>", ServiceProvider.GetService<IRepository<User,int>>().GetHashCode()),
-                format.FormatWith("IRepository<User,int>", ServiceProvider.GetService<IRepository<User,int>>().GetHashCode())
+                format.FormatWith("IRepository<User,int>", ServiceProvider.GetService<IRepository<User,int>>().GetHashCode()),
+                format.FormatWith("UserManager", ServiceProvider.GetService<UserManager<User,int>>().GetHashCode()),
+                format.FormatWith("UserManager", ServiceProvider.GetService<UserManager>().GetHashCode()),
             };
             return Content(lines.ExpandAndToString("<br>"));
+        }
+
+        public async Task<ActionResult> Test1()
+        {
+            OAuthClientStore oAuthClientStore = ServiceProvider.GetService<OAuthClientStore>();
+            OperationResult result = null;
+            //ClientInputDto clientDto = new ClientInputDto()
+            //{
+            //    Name = "测试客户端01",
+            //    ClientType = ClientType.Application,
+            //    Url = "http://localhost:10240",
+            //    LogoUrl = "http://localhost:10240",
+            //    RedirectUrl = "http://localhost:10240"
+            //};
+            //result = await clientStore.AddClient(clientDto);
+            OAuthClientSecretInputDto secretDto = new OAuthClientSecretInputDto()
+            {
+                Type = "Test Type",
+                Remark = "Remark",
+                ClientId = 2
+            };
+            result = await oAuthClientStore.CreateClientSecret(secretDto);
+            return Content(result.Message);
+        }
+
+        public async Task<ActionResult> Test2()
+        {
+            UserManager manager = ServiceProvider.GetService<UserManager>();
+            IdentityResult result = await manager.AddPasswordAsync(1, "gmf31529019");
+            return Content(result.ToJsonString());
+        }
+
+        public ActionResult Test3()
+        {
+            return null;
         }
     }
 }

@@ -8,43 +8,32 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Diagnostics;
 using System.Web;
+using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Routing;
 
-using OSharp.Autofac.Http;
-using OSharp.Autofac.Mvc;
-using OSharp.Autofac.SignalR;
-using OSharp.Core;
-using OSharp.Core.Caching;
-using OSharp.Core.Configs;
-using OSharp.Core.Dependency;
-using OSharp.Core.Initialize;
-using OSharp.Demo.Dtos;
-using OSharp.Logging.Log4Net;
-using OSharp.SiteBase.Initialize;
-using OSharp.Web.Http.Initialize;
-using OSharp.Web.Mvc.Initialize;
+using OSharp.Utility.Logging;
+using OSharp.Web.Http.Extensions;
 using OSharp.Web.Mvc.Routing;
-using OSharp.Web.SignalR.Initialize;
 
 
 namespace OSharp.Demo.Web
 {
     public class Global : HttpApplication
     {
+        private ILogger _logger;
+
         protected void Application_Start(object sender, EventArgs e)
         {
             AreaRegistration.RegisterAllAreas();
             RoutesRegister();
-            DtoMappers.MapperRegister();
-
-            //Initialize();
         }
 
         private static void RoutesRegister()
         {
+            GlobalConfiguration.Configuration.MapDefaultRoutes();
+
             RouteCollection routes = RouteTable.Routes;
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
             routes.MapLowerCaseUrlRoute(
@@ -54,21 +43,19 @@ namespace OSharp.Demo.Web
                 new[] { "OSharp.Demo.Web.Controllers" });
         }
 
-        private static void Initialize()
+        protected void Application_Error(object sender, EventArgs e)
         {
-            ICacheProvider provider = new RuntimeMemoryCacheProvider();
-            CacheManager.SetProvider(provider, CacheLevel.First);
-            
-            IServicesBuilder builder = new ServicesBuilder(new ServiceBuildOptions());
-            IServiceCollection services = builder.Build();
-            services.AddLog4NetServices();
-            services.AddDataServices();
-
-            IFrameworkInitializer initializer = new FrameworkInitializer();
-            
-            initializer.Initialize(services, new MvcAutofacIocBuilder());
-            initializer.Initialize(services, new WebApiAutofacIocBuilder());
-            initializer.Initialize(services, new SignalRAutofacIocBuilder());
+            GetLogger();
+            Exception ex = Server.GetLastError();
+            _logger.Fatal("全局异常Application_Error", ex);
+        }
+        
+        private void GetLogger()
+        {
+            if (_logger == null)
+            {
+                _logger = LogManager.GetLogger<Global>();
+            }
         }
     }
 }

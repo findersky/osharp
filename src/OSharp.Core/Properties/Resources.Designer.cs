@@ -79,6 +79,15 @@ namespace OSharp.Core.Properties {
         }
         
         /// <summary>
+        ///   查找类似 名称为“{0}”的类型不存在 的本地化字符串。
+        /// </summary>
+        internal static string ConfigFile_NameToTypeIsNull {
+            get {
+                return ResourceManager.GetString("ConfigFile_NameToTypeIsNull", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 请先初始化依赖注入服务，再使用OSharpContext.IocRegisterServices属性 的本地化字符串。
         /// </summary>
         internal static string Context_BuildServicesFirst {
@@ -97,47 +106,20 @@ namespace OSharp.Core.Properties {
         }
         
         /// <summary>
-        ///   查找类似 数据库初始化器不能为空，请为框架初始化类的DatabaseInitializer属性赋值 的本地化字符串。
-        /// </summary>
-        internal static string FrameworkInitializerBase_DatabaseInitializeIsNull {
-            get {
-                return ResourceManager.GetString("FrameworkInitializerBase_DatabaseInitializeIsNull", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 数据处理初始化器不能为空，请为框架初始化类的EntityInfoHandler属性赋值 的本地化字符串。
-        /// </summary>
-        internal static string FrameworkInitializerBase_EntityInfoHandlerIsNull {
-            get {
-                return ResourceManager.GetString("FrameworkInitializerBase_EntityInfoHandlerIsNull", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 数据处理初始化器不能为空，请为框架初始化类的FunctionHandler属性赋值 的本地化字符串。
-        /// </summary>
-        internal static string FrameworkInitializerBase_FunctionHandlerIsNull {
-            get {
-                return ResourceManager.GetString("FrameworkInitializerBase_FunctionHandlerIsNull", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 依赖注入初始化器不能为空，请为框架初始化类的IocInitializer属性赋值 的本地化字符串。
-        /// </summary>
-        internal static string FrameworkInitializerBase_IocInitializeIsNull {
-            get {
-                return ResourceManager.GetString("FrameworkInitializerBase_IocInitializeIsNull", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   查找类似 无法解析类型“{0}”的构造函数中类型为“{1}”的参数 的本地化字符串。
         /// </summary>
         internal static string Ioc_CannotResolveService {
             get {
                 return ResourceManager.GetString("Ioc_CannotResolveService", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 OSharp框架尚未初始化，请先初始化 的本地化字符串。
+        /// </summary>
+        internal static string Ioc_FrameworkNotInitialized {
+            get {
+                return ResourceManager.GetString("Ioc_FrameworkNotInitialized", resourceCulture);
             }
         }
         
@@ -183,6 +165,15 @@ namespace OSharp.Core.Properties {
         internal static string IocInitializerBase_TypeNotIUnitOfWorkType {
             get {
                 return ResourceManager.GetString("IocInitializerBase_TypeNotIUnitOfWorkType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 MapperExtensions.Mapper不能为空，请先设置值 的本地化字符串。
+        /// </summary>
+        internal static string Map_MapperIsNull {
+            get {
+                return ResourceManager.GetString("Map_MapperIsNull", resourceCulture);
             }
         }
         

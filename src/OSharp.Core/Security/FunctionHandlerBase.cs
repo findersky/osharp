@@ -13,10 +13,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
-using OSharp.Core.Context;
 using OSharp.Core.Data;
 using OSharp.Core.Dependency;
-using OSharp.Core.Reflection;
 using OSharp.Utility.Collections;
 using OSharp.Utility.Logging;
 
@@ -30,6 +28,7 @@ namespace OSharp.Core.Security
     /// <typeparam name="TKey">功能信息主键类型</typeparam>
     public abstract class FunctionHandlerBase<TFunction, TKey> : IFunctionHandler
         where TFunction : FunctionBase<TKey>, IFunction, new()
+        where TKey : IEquatable<TKey>
     {
         private ILogger _logger;
 
@@ -52,14 +51,14 @@ namespace OSharp.Core.Security
         protected TFunction[] Functions { get; private set; }
 
         /// <summary>
-        /// 获取或设置 控制器类型查找器
+        /// 获取或设置 功能信息类型查找器
         /// </summary>
-        protected abstract ITypeFinder TypeFinder { get; }
+        public IFunctionTypeFinder TypeFinder { get; set; }
 
         /// <summary>
-        /// 获取或设置 功能查找器
+        /// 获取或设置 功能信息方法查找器
         /// </summary>
-        protected abstract IMethodInfoFinder MethodInfoFinder { get; }
+        public IFunctionMethodInfoFinder MethodInfoFinder { get; set; }
 
         /// <summary>
         /// 获取 功能技术提供者，如Mvc/WebApi/SignalR等，用于区分功能来源，各技术更新功能时，只更新属于自己技术的功能
@@ -73,6 +72,10 @@ namespace OSharp.Core.Security
         {
             Type[] types = TypeFinder.FindAll();
             TFunction[] functions = GetFunctions(types);
+            if (functions.Length == 0)
+            {
+                return;
+            }
             UpdateToRepository(functions);
             RefreshCache();
         }
@@ -88,11 +91,19 @@ namespace OSharp.Core.Security
         {
             if (Functions == null)
             {
-                RefreshCache();
+                lock (this)
+                {
+                    if (Functions == null)
+                    {
+                        RefreshCache();
+                    }
+                }
             }
             Debug.Assert(Functions != null, "Functions != null");
-            return Functions.FirstOrDefault(m => m.Area == area && m.Controller == controller
-                && m.Action == action && m.PlatformToken == PlatformToken);
+            return Functions.FirstOrDefault(m => string.Equals(m.Area, area, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(m.Controller, controller, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(m.Action, action, StringComparison.OrdinalIgnoreCase)
+                && m.PlatformToken == PlatformToken);
         }
 
         /// <summary>
@@ -129,6 +140,10 @@ namespace OSharp.Core.Security
             foreach (Type controllerType in types.OrderBy(m => m.FullName))
             {
                 TFunction controller = GetFunction(controllerType);
+                if (controller == null)
+                {
+                    continue;
+                }
                 if (!ExistsFunction(functions, controller))
                 {
                     functions.Add(controller);
@@ -137,16 +152,15 @@ namespace OSharp.Core.Security
                 foreach (MethodInfo method in methods)
                 {
                     TFunction action = GetFunction(method);
-                    TFunction existAction = GetFunction(functions, action.Action, action.Controller, action.Area, action.Name);
-                    //忽略指定条件的已存在的功能信息
-                    if (existAction != null && IsIgnoreMethod(method))
+                    if (action == null)
                     {
                         continue;
                     }
-                    if (existAction == null)
+                    if (IsIgnoreMethod(action, method, functions))
                     {
-                        functions.Add(action);
+                        continue;
                     }
+                    functions.Add(action);
                 }
             }
             return functions.ToArray();
@@ -174,8 +188,12 @@ namespace OSharp.Core.Security
         /// <returns></returns>
         protected virtual bool ExistsFunction(IEnumerable<TFunction> functions, TFunction function)
         {
-            return functions.Any(m => m.Action == function.Action && m.Controller == function.Controller
-                && m.Area == function.Area && m.Name == function.Name && m.PlatformToken == PlatformToken);
+            return functions.Any(m =>
+                string.Equals(m.Area, function.Area, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(m.Controller, function.Controller, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(m.Action, function.Action, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(m.Name, function.Name, StringComparison.OrdinalIgnoreCase)
+                    && m.PlatformToken == PlatformToken);
         }
 
         /// <summary>
@@ -189,18 +207,25 @@ namespace OSharp.Core.Security
         /// <returns></returns>
         protected virtual TFunction GetFunction(IEnumerable<TFunction> functions, string action, string controller, string area, string name)
         {
-            return functions.FirstOrDefault(m => m.Action == action && m.Controller == controller
-                && m.Area == area && m.Name == name && m.PlatformToken == PlatformToken);
+            return functions.FirstOrDefault(m =>
+                string.Equals(m.Area, area, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(m.Controller, controller, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(m.Action, action, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase)
+                    && m.PlatformToken == PlatformToken);
         }
 
         /// <summary>
         /// 重写以实现是否忽略指定方法的功能信息
         /// </summary>
-        /// <param name="method">方法信息</param>
+        /// <param name="action">要判断的功能信息</param>
+        /// <param name="method">功能相关的方法信息</param>
+        /// <param name="functions">已存在的功能信息集合</param>
         /// <returns></returns>
-        protected virtual bool IsIgnoreMethod(MethodInfo method)
+        protected virtual bool IsIgnoreMethod(TFunction action, MethodInfo method, IEnumerable<TFunction> functions)
         {
-            return false;
+            TFunction exist = GetFunction(functions, action.Action, action.Controller, action.Area, action.Name);
+            return exist != null;
         }
 
         /// <summary>
@@ -209,20 +234,43 @@ namespace OSharp.Core.Security
         /// <param name="functions">功能信息集合</param>
         protected virtual void UpdateToRepository(TFunction[] functions)
         {
+            if (functions.Length == 0)
+            {
+                return;
+            }
             IRepository<TFunction, TKey> repository = ServiceProvider.GetService<IRepository<TFunction, TKey>>();
-            // DependencyResolver.Current.GetService<IRepository<TFunction, TKey>>();
-            TFunction[] items = repository.GetByPredicate(m => m.PlatformToken == PlatformToken).ToArray();
+            if (repository == null)
+            {
+                return;
+            }
+            TFunction[] items = repository.TrackEntities.Where(m => m.PlatformToken == PlatformToken).ToArray();
 
             //删除的功能（排除自定义功能信息）
             TFunction[] removeItems = items.Where(m => !m.IsCustom).Except(functions,
                 EqualityHelper<TFunction>.CreateComparer(m => m.Area + m.Controller + m.Action + m.PlatformToken)).ToArray();
             int removeCount = removeItems.Length;
-            if (repository.Delete(removeItems) > 0)
+            repository.UnitOfWork.BeginTransaction();
+            int tmpCount = 0;
+            foreach (TFunction removeItem in removeItems)
             {
-                items = repository.GetByPredicate(m => true).ToArray();
+                try
+                {
+                    removeItem.IsDeleted = true;
+                    tmpCount += repository.Delete(removeItem);
+                }
+                catch (Exception)
+                {
+                    //无法物理删除，可能是外键约束，改为逻辑删除
+                    tmpCount += repository.Recycle(removeItem);
+                }
+            }
+            repository.UnitOfWork.Commit();
+            if (tmpCount > 0)
+            {
+                items = repository.TrackEntities.ToArray();
             }
 
-            repository.UnitOfWork.TransactionEnabled = true;
+            repository.UnitOfWork.BeginTransaction();
             //处理新增的功能
             TFunction[] addItems = functions.Except(items,
                 EqualityHelper<TFunction>.CreateComparer(m => m.Area + m.Controller + m.Action + m.PlatformToken)).ToArray();
@@ -231,6 +279,7 @@ namespace OSharp.Core.Security
 
             //处理更新的功能
             int updateCount = 0;
+            tmpCount = 0;
             foreach (TFunction item in items)
             {
                 if (item.IsCustom)
@@ -238,13 +287,16 @@ namespace OSharp.Core.Security
                     continue;
                 }
                 bool isUpdate = false;
-                TFunction function = functions.SingleOrDefault(m => m.Area == item.Area && m.Controller == item.Controller
-                    && m.Action == item.Action && m.PlatformToken == PlatformToken);
+                TFunction function = functions.SingleOrDefault(m =>
+                    string.Equals(m.Area, item.Area, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(m.Controller, item.Controller, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(m.Action, item.Action, StringComparison.OrdinalIgnoreCase)
+                        && m.PlatformToken == PlatformToken);
                 if (function == null)
                 {
                     continue;
                 }
-                if (item.Name != function.Name)
+                if (!item.Name.Equals(function.Name, StringComparison.OrdinalIgnoreCase))
                 {
                     item.Name = function.Name;
                     isUpdate = true;
@@ -261,12 +313,12 @@ namespace OSharp.Core.Security
                 }
                 if (isUpdate)
                 {
-                    repository.Update(item);
+                    tmpCount += repository.Update(item);
                     updateCount++;
                 }
             }
-            int count = repository.UnitOfWork.SaveChanges();
-            if (removeCount > 0 || count > 0)
+            repository.UnitOfWork.Commit();
+            if (removeCount > 0 || tmpCount > 0)
             {
                 string message = "刷新功能信息";
                 if (addCount > 0)

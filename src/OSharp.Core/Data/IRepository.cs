@@ -8,10 +8,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
 
 using OSharp.Core.Dependency;
@@ -27,6 +25,7 @@ namespace OSharp.Core.Data
     /// <typeparam name="TKey">主键类型</typeparam>
     public interface IRepository<TEntity, TKey> : IScopeDependency 
         where TEntity : IEntity<TKey>
+        where TKey : IEquatable<TKey>
     {
         #region 属性
 
@@ -36,9 +35,14 @@ namespace OSharp.Core.Data
         IUnitOfWork UnitOfWork { get; }
 
         /// <summary>
-        /// 获取 当前实体类型的查询数据集，数据将使用不跟踪变化的方式来查询
+        /// 获取 当前实体类型的查询数据集，数据将使用不跟踪变化的方式来查询，当数据用于展现时，推荐使用此数据集，如果用于新增，更新，删除时，请使用<see cref="TrackEntities"/>数据集
         /// </summary>
         IQueryable<TEntity> Entities { get; }
+
+        /// <summary>
+        /// 获取 当前实体类型的查询数据集，当数据用于新增，更新，删除时，使用此数据集，如果数据用于展现，推荐使用<see cref="Entities"/>数据集
+        /// </summary>
+        IQueryable<TEntity> TrackEntities { get; }
 
         #endregion
 
@@ -61,15 +65,15 @@ namespace OSharp.Core.Data
         /// <summary>
         /// 以DTO为载体批量插入实体
         /// </summary>
-        /// <typeparam name="TAddDto">添加DTO类型</typeparam>
+        /// <typeparam name="TInputDto">添加DTO类型</typeparam>
         /// <param name="dtos">添加DTO信息集合</param>
         /// <param name="checkAction">添加信息合法性检查委托</param>
         /// <param name="updateFunc">由DTO到实体的转换委托</param>
         /// <returns>业务操作结果</returns>
-        OperationResult Insert<TAddDto>(ICollection<TAddDto> dtos,
-            Action<TAddDto> checkAction = null,
-            Func<TAddDto, TEntity, TEntity> updateFunc = null)
-            where TAddDto : IAddDto;
+        OperationResult Insert<TInputDto>(ICollection<TInputDto> dtos,
+            Action<TInputDto> checkAction = null,
+            Func<TInputDto, TEntity, TEntity> updateFunc = null)
+            where TInputDto : IInputDto<TKey>;
 
         /// <summary>
         /// 逻辑删除实体
@@ -165,14 +169,14 @@ namespace OSharp.Core.Data
         OperationResult Delete(ICollection<TKey> ids, Action<TEntity> checkAction = null, Func<TEntity, TEntity> deleteFunc = null);
 
         /// <summary>
-        /// 直接删除指定编号的实体，此方法不支持事务
+        /// 直接删除指定编号的实体
         /// </summary>
         /// <param name="key">实体主键</param>
         /// <returns></returns>
         int DeleteDirect(TKey key);
 
         /// <summary>
-        /// 直接删除所有符合特定条件的实体，此方法不支持事务
+        /// 直接删除所有符合特定条件的实体
         /// </summary>
         /// <param name="predicate">查询条件谓语表达式</param>
         /// <returns>操作影响的行数</returns>
@@ -194,12 +198,12 @@ namespace OSharp.Core.Data
         /// <param name="updateFunc">由DTO到实体的转换委托</param>
         /// <returns>业务操作结果</returns>
         OperationResult Update<TEditDto>(ICollection<TEditDto> dtos,
-            Action<TEditDto> checkAction = null,
+            Action<TEditDto, TEntity> checkAction = null,
             Func<TEditDto, TEntity, TEntity> updateFunc = null)
-            where TEditDto : IEditDto<TKey>;
+            where TEditDto : IInputDto<TKey>;
 
         /// <summary>
-        /// 直接更新指定编号的数据，此方法不支持事务
+        /// 直接更新指定编号的数据
         /// </summary>
         /// <param name="key">实体编号</param>
         /// <param name="updatExpression">更新属性表达式</param>
@@ -207,7 +211,7 @@ namespace OSharp.Core.Data
         int UpdateDirect(TKey key, Expression<Func<TEntity, TEntity>> updatExpression);
 
         /// <summary>
-        /// 直接更新指定条件的数据，此方法不支持事务
+        /// 直接更新指定条件的数据
         /// </summary>
         /// <param name="predicate">查询条件谓语表达式</param>
         /// <param name="updatExpression">更新属性表达式</param>
@@ -234,6 +238,7 @@ namespace OSharp.Core.Data
         /// </summary>
         /// <param name="predicate">查询表达式</param>
         /// <returns>符合条件的实体集合</returns>
+        [Obsolete("此API即将移除，请使用 TrackEntities 查询数据集 替换此方法的查询")]
         IEnumerable<TEntity> GetByPredicate(Expression<Func<TEntity, bool>> predicate);
 
         /// <summary>
@@ -273,6 +278,19 @@ namespace OSharp.Core.Data
         /// <param name="entities">实体对象集合</param>
         /// <returns>操作影响的行数</returns>
         Task<int> InsertAsync(IEnumerable<TEntity> entities);
+
+        /// <summary>
+        /// 异步以DTO为载体批量插入实体
+        /// </summary>
+        /// <typeparam name="TInputDto">添加DTO类型</typeparam>
+        /// <param name="dtos">添加DTO信息集合</param>
+        /// <param name="checkAction">添加信息合法性检查委托</param>
+        /// <param name="updateFunc">由DTO到实体的转换委托</param>
+        /// <returns>业务操作结果</returns>
+        Task<OperationResult> InsertAsync<TInputDto>(ICollection<TInputDto> dtos,
+            Func<TInputDto, Task> checkAction = null,
+            Func<TInputDto, TEntity, Task<TEntity>> updateFunc = null)
+            where TInputDto : IInputDto<TKey>;
 
         /// <summary>
         /// 异步逻辑删除实体
@@ -359,14 +377,23 @@ namespace OSharp.Core.Data
         Task<int> DeleteAsync(IEnumerable<TEntity> entities);
 
         /// <summary>
-        /// 直接删除指定编号的实体，此方法不支持事务
+        /// 异步以标识集合批量删除实体
+        /// </summary>
+        /// <param name="ids">标识集合</param>
+        /// <param name="checkAction">删除前置检查委托</param>
+        /// <param name="deleteFunc">删除委托，用于删除关联信息</param>
+        /// <returns>业务操作结果</returns>
+        Task<OperationResult> DeleteAsync(ICollection<TKey> ids, Func<TEntity, Task> checkAction = null, Func<TEntity, Task<TEntity>> deleteFunc = null);
+
+        /// <summary>
+        /// 直接删除指定编号的实体
         /// </summary>
         /// <param name="key">实体主键</param>
         /// <returns></returns>
         Task<int> DeleteDirectAsync(TKey key);
 
         /// <summary>
-        /// 直接删除所有符合特定条件的实体，此方法不支持事务
+        /// 直接删除所有符合特定条件的实体
         /// </summary>
         /// <param name="predicate">查询条件谓语表达式</param>
         /// <returns>操作影响的行数</returns>
@@ -380,7 +407,20 @@ namespace OSharp.Core.Data
         Task<int> UpdateAsync(TEntity entity);
 
         /// <summary>
-        /// 直接更新指定编号的数据，此方法不支持事务
+        /// 异步以DTO为载体批量更新实体
+        /// </summary>
+        /// <typeparam name="TEditDto">更新DTO类型</typeparam>
+        /// <param name="dtos">更新DTO信息集合</param>
+        /// <param name="checkAction">更新信息合法性检查委托</param>
+        /// <param name="updateFunc">由DTO到实体的转换委托</param>
+        /// <returns>业务操作结果</returns>
+        Task<OperationResult> UpdateAsync<TEditDto>(ICollection<TEditDto> dtos,
+            Func<TEditDto, TEntity, Task> checkAction = null,
+            Func<TEditDto, TEntity, Task<TEntity>> updateFunc = null)
+            where TEditDto : IInputDto<TKey>;
+
+        /// <summary>
+        /// 直接更新指定编号的数据
         /// </summary>
         /// <param name="key">实体编号</param>
         /// <param name="updatExpression">更新属性表达式</param>
@@ -388,7 +428,7 @@ namespace OSharp.Core.Data
         Task<int> UpdateDirectAsync(TKey key, Expression<Func<TEntity, TEntity>> updatExpression);
 
         /// <summary>
-        /// 直接更新指定条件的数据，此方法不支持事务
+        /// 直接更新指定条件的数据
         /// </summary>
         /// <param name="predicate">查询条件谓语表达式</param>
         /// <param name="updatExpression">更新属性表达式</param>
@@ -415,6 +455,7 @@ namespace OSharp.Core.Data
         /// </summary>
         /// <param name="predicate">查询表达式</param>
         /// <returns>符合条件的实体集合</returns>
+        [Obsolete("此API即将移除，请使用 TrackEntities 查询数据集 替换此方法的查询")]
         Task<IEnumerable<TEntity>> GetByPredicateAsync(Expression<Func<TEntity, bool>> predicate);
 
 #endif
